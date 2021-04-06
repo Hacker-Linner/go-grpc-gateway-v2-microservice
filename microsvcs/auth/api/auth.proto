@@ -1,0 +1,16 @@
+syntax = "proto3";
+package auth.v1;
+option go_package="server/auth/api/gen/v1;authpb";
+
+message LoginRequest {
+    string code = 1;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int32 expires_in = 2; // 按 oauth2 约定走
+}
+
+service AuthService {
+    rpc Login (LoginRequest) returns (LoginResponse);
+}
