@@ -4,13 +4,13 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	authpb "server/auth/api/gen/v1"
 	"server/auth/auth"
 	"server/auth/token"
 	"server/auth/wechat"
 	"server/dao"
+	"server/shared/server"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -21,22 +21,20 @@ import (
 )
 
 func main() {
+	// logger
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatalf("cannot create logger: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":8081")
-	if err != nil {
-		logger.Fatal("cannot listen", zap.Error(err))
-	}
-
+	// mongo
 	c := context.Background()
 	mongoClient, err := mongo.Connect(c, options.Client().ApplyURI("mongodb://localhost:27017/?readPreference=primary&appname=mongodb-vscode%200.5.0&ssl=false"))
 	if err != nil {
 		logger.Fatal("cannot connect mongodb", zap.Error(err))
 	}
 
+	// private.key
 	pkFile, err := os.Open("auth/private.key")
 	if err != nil {
 		logger.Fatal("cannot open private key", zap.Error(err))
@@ -52,17 +50,24 @@ func main() {
 		logger.Fatal("cannot parse private key", zap.Error(err))
 	}
 
-	s := grpc.NewServer()
-	authpb.RegisterAuthServiceServer(s, &auth.Service{
-		OpenIDResolver: &wechat.Service{
-			AppID:     "your-app-id",
-			AppSecret: "your-app-secret",
-		},
-		Mongo:          dao.NewMongo(mongoClient.Database("grpc-gateway-auth")),
-		Logger:         logger,
-		TokenExpire:    2 * time.Hour,
-		TokenGenerator: token.NewJWTTokenGen("server/auth", privKey),
-	})
-	err = s.Serve(lis)
-	logger.Fatal("cannot server", zap.Error(err))
+	// RunGRPCServer
+	logger.Sugar().Fatal(
+		server.RunGRPCServer(&server.GRPCConfig{
+			Name:   "auth",
+			Addr:   ":8081",
+			Logger: logger,
+			RegisterFunc: func(s *grpc.Server) {
+				authpb.RegisterAuthServiceServer(s, &auth.Service{
+					OpenIDResolver: &wechat.Service{
+						AppID:     "your-appid",
+						AppSecret: "your-appsecret",
+					},
+					Mongo:          dao.NewMongo(mongoClient.Database("grpc-gateway-auth")),
+					Logger:         logger,
+					TokenExpire:    2 * time.Hour,
+					TokenGenerator: token.NewJWTTokenGen("server/auth", privKey),
+				})
+			},
+		}),
+	)
 }

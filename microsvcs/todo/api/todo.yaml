@@ -1,0 +1,8 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+  - selector: todo.v1.TodoService.CreateTodo
+    post: /v1/todo
+    body: "*"

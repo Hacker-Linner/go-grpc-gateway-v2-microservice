@@ -21,5 +21,6 @@ gcloud/
 dist/
 bin/
 
-miniprogram/$node_modules
-miniprogram/node_modules
+client/miniprogram/$node_modules
+client/miniprogram/node_modules
+client/miniprogram/miniprogram_npm

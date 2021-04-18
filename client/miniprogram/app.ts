@@ -1,5 +1,6 @@
 import * as camelcaseKeys from "camelcase-keys"
 import { auth } from "./service/proto_gen/auth/auth_pb"
+import { todo } from "./service/proto_gen/todo/todo_pb"
 // app.ts
 App<IAppOption>({
   globalData: {},
@@ -25,6 +26,18 @@ App<IAppOption>({
                 camelcaseKeys(res.data as object),
               )
             console.log(loginResp)
+            
+            // 测试接口
+            wx.request({
+              url: "http://localhost:8080/v1/todo",
+              method: "POST",
+              data: {
+                title: "hello,world!"
+              } as todo.v1.ICreateTodoRequest,
+              header: {
+                authorization: 'Bearer '+loginResp.accessToken,
+              }
+            })
           },
           fail: console.error,
         })

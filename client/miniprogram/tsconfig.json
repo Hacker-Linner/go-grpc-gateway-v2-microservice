@@ -19,9 +19,7 @@
     "pretty": true,
     "strictPropertyInitialization": true,
     "lib": ["es6"],
-    "typeRoots": [
-      "./typings"
-    ]
+    "types": ["miniprogram-api-typings"]
   },
   "include": [
     "./**/*.ts"
